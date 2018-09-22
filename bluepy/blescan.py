@@ -303,4 +303,3 @@ if __name__ == "__main__":
 
     create_dev_tree(bluetooth_devices)
 
-    #CIAOOOOOOOO000000000

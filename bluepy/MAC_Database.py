@@ -31,7 +31,7 @@ def read_beaconID(val):
     for row in c.fetchall():
 
        BeaconID.append(str(row[0][0]))
-       print('>>>>>>>>>>>BEACON: '+row[0][0])
+       #print('>>>>>>>>>>>BEACON: '+row[0][0])
 
 
     return BeaconID
@@ -76,13 +76,13 @@ def search_in_DB(MAC):
 
 
     if len(BeaconID)>0:
-        print(BeaconID[0][0])
+        #print(BeaconID[0][0])
         MAclist=read_MAClist(BeaconID[0][0])
 
         for i in range(0, len(MAclist)):
             MAC_List.append(MAclist[i])
 
-        print(MAC_List[0])
+        #print(MAC_List[0])
         c.close()
         conn.close()
         return MAC_List

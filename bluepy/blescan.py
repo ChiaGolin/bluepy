@@ -6,7 +6,6 @@ import os
 import sys
 from bluepy import btle
 import pprint as pp
-import hex_conv as hh
 import string
 import MAC_Database as MAC
 
@@ -183,51 +182,69 @@ def RSSI_ave(list_RSSI):
 
 if __name__ == "__main__":
     main()
-    ble_list = []
-    # pp.pprint(bluetooth_devices)
-    # print('**************************')
-    # pp.pprint(bd_list)
+    ble_list=[]
+    #pp.pprint(bluetooth_devices)
+    #print('**************************')
+    #pp.pprint(bd_list)
 
-    key_list = []
-    rssi_list = []
-    bd_addr = []
-    ################### create list #################
+
+
+
+    key_list=[]
+    rssi_list=[]
+    bd_addr=[]
+    mac_list=[]
+    BEACON_list=[]
+################### create list #################
     for key, val in bd_list.items():
-        print(key, val)
-        # print(val['rssi'])
-        if key != None:
+        #print(key, val)
+        #print(val['rssi'])
+        if key!=None:
             rssi_list.append(int(val['rssi']))
+            mac_list.append(str(key))
 
-    ############# find beacon address (max rssi) ######## if it's the first step
+############# find beacon address (max rssi) ######## if it's the first step
 
     for key, val in bd_list.items():
-        if int(val['rssi']) == max(rssi_list):
+        if int(val['rssi'])==max(rssi_list):
             bd_addr.append(key)
 
-    ############ select from the database all the address associated to the same beacon ############
-    print('>>>>>>>>>')
+
+
+
+############ select from the database all the address associated to the same beacon ############
+
     print(bd_addr)
-    print('><>>>>>>>>><')
+
     for i in range(0, len(bd_addr)):
-        print("Searching " + bd_addr[i])
-        MAC_List = MAC.search_in_DB(
-            bd_addr[i])  # I'll send the list to all the rasberrypi, or just one MAC and I'll find the
+        bool_val = 0
+        #print("Searching "+mac_list[i])
+        MAC_List=MAC.search_in_DB(bd_addr[i]) #I'll send the list to all the rasberrypi, or just one MAC and I'll find the
         # other with the same procedure of above
-        # print('ter')
-        # print(MAC_List)
-        RSSI_list = []
-        # print(MAC_List)
-        if MAC_List != 'not in range':
-            for key, val in bd_list.items():
-                if key in MAC_List:
-                    # print(val['rssi'])
-                    if val['rssi'] != None:
-                        RSSI_list.append(int(val['rssi']))
+        #print('ter')
+        #print(MAC_List)
+        BeaconID = MAC.read_beaconID(MAC_List[0])
+        BEACON_list.append(BeaconID)
+        RSSI_list=[]
 
-            print(RSSI_list)
-            RSSI_average = RSSI_ave(RSSI_list)
-            print(RSSI_average)
+        #print(MAC_List)
 
+        if bool_val<=1:
+            #print(BeaconID)
+            if MAC_List != 'not in range':
+                print('>>>>>>>> BEACON: '+BeaconID[0])
+                for key, val in bd_list.items():
+                    if key in MAC_List:
+                        # print(val['rssi'])
+                        if val['rssi'] != None:
+                            #print(val['rssi'])
+                            RSSI_list.append(int(val['rssi']))
+
+                #print(RSSI_list)
+                RSSI_average = RSSI_ave(RSSI_list)
+                print(RSSI_average)
+
+            else:
+                print("############### BEACON NOT FOUND ##################")
         else:
-            print("############### BEACON NOT FOUND ##################")
-
+            continue

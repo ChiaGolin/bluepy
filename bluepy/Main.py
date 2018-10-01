@@ -8,6 +8,7 @@ import queue as Queue
 import subprocess
 import logging
 import os
+import paho.mqtt.client as mqtt
 import pathlib
 import xml.etree.ElementTree as ET
 import pprint as pp
@@ -15,7 +16,7 @@ from collections import namedtuple
 from datetime import datetime
 from time import strftime, localtime
 #my imports
-import MQTT_Handler
+import MQTT_Handler as MQTT
 #import PingHandler
 #import ProjectorHandler
 
@@ -71,7 +72,7 @@ if __name__ == "__main__":
     logging.info("Starting main...")
     #setup display
 
-    client=paho
+    client=mqtt.client("client-001")
 
 
 

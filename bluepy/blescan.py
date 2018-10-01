@@ -7,7 +7,9 @@ import sys
 from bluepy import btle
 import pprint as pp
 import string
+import json
 import MAC_Database as MAC
+from time import strftime, localtime
 
 if os.getenv('C', '1') == '0':
     ANSI_RED = ''
@@ -227,6 +229,12 @@ if __name__ == "__main__":
         BEACON_list.append(BeaconID)
         RSSI_list=[]
 
+        for i in range(0, len(BEACON_list)):
+            # print(BeaconID)
+            # print(BEACON_list)
+            if BeaconID == BEACON_list[i]:
+                bool_val = bool_val + 1
+
         #print(MAC_List)
 
         if bool_val<=1:
@@ -244,7 +252,41 @@ if __name__ == "__main__":
                 RSSI_average = RSSI_ave(RSSI_list)
                 print(RSSI_average)
 
+
+                Beacon_flag='1'
+                color='white'
+                placeID='3403'
+                starting_time = strftime("%H%M%S", localtime())  # hour, minute, second
+                starting_day = strftime("%d%m%y", localtime())
+                timestamp=starting_time+' '+starting_day
+
+                Beacon_dictionary=\
+                {
+                    "id":str(BeaconID[0]),
+                    "mac":MAC_List,
+                    "place_id" :placeID,
+                    "timestamp":timestamp,
+                    "color":color,
+                    "beacon_flag":Beacon_flag,
+
+                }
+
+               # Beacon_dictionary={{str(a):str(b), {str(c):str(d), {str(e):str(f), {str(g):str(h), {str(l):str(m), {str(n):str(o)} for a,b,c,d,e,f,g,h,i,l,m,n,o in zip(beacon_key, beacon_value)}
+                #Beacon_dictionary=dict(zip(beacon_key,beacon_value))
+                print(Beacon_dictionary)
+
+                #Beacon_dictionary=dict()
+
+                with open(BeaconID[0]+'.json', 'w') as f:
+                    json_string=json.dump(Beacon_dictionary,f)
+                #[Beacon_dictionary.update({k}) for k in (zip_dict)]
+
+                #print(Beacon_dictionary)
+
+
             else:
-                print("############### BEACON NOT FOUND ##################")
+                print(">>>>> NOT A BEACON")
         else:
             continue
+
+

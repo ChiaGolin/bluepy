@@ -82,7 +82,7 @@ def search_in_DB(MAC):
         for i in range(0, len(MAclist)):
             MAC_List.append(MAclist[i])
 
-        #print(MAC_List[0])
+        #print(MAC_List)
         c.close()
         conn.close()
         return MAC_List

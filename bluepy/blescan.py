@@ -283,7 +283,7 @@ if __name__ == "__main__":
                 pub.publishing(BeaconID[0]+'.json', broker, topic_name)
 
 
-                #print(Beacon_dictionary)
+
 
 
             else:

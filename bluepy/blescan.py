@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from __future__ import print_function
 import argparse
 import binascii
 import os
@@ -9,7 +8,10 @@ import pprint as pp
 import string
 import json
 import MAC_Database as MAC
+import Publish as pub
 from time import strftime, localtime
+import logging
+from collections import namedtuple
 
 if os.getenv('C', '1') == '0':
     ANSI_RED = ''
@@ -31,6 +33,15 @@ bluetooth_devices = {}
 bd_list = {}
 bd_list2 = {}
 
+rasp_id ="A"
+logging.basicConfig(filename= 'Log/rasp'+rasp_id+'.log',level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+
+#basic info for MQTT transmition
+broker = "127.0.0.1" #broker as my local address
+topic_name =["topic/rasp4/directions/start", "topic/rasp4/directions/stop"]
+StartMsg = namedtuple('StartMsg', ['mac_address', 'place_id', 'id', 'timestamp', 'color', 'beacon_flag'])
+StopMsg = namedtuple('StopMsg', ['mac_address', 'timestamp'])
 
 def dump_services(dev):
     services = sorted(dev.services, key=lambda s: s.hndStart)
@@ -110,7 +121,7 @@ class ScanPrint(btle.DefaultDelegate):
             {'rssi': dev.rssi,
              'conn': ('connectable' if dev.connectable else 'not connectable'),
              'add_type': dev.addrType,
-             'manufacturer': manufacturer}
+             }
 
         bd_list[dev.addr] = \
             {
@@ -184,23 +195,16 @@ def RSSI_ave(list_RSSI):
 
 if __name__ == "__main__":
     main()
+
     ble_list=[]
-    #pp.pprint(bluetooth_devices)
-    #print('**************************')
-    #pp.pprint(bd_list)
-
-
-
-
     key_list=[]
     rssi_list=[]
     bd_addr=[]
     mac_list=[]
     BEACON_list=[]
+
 ################### create list #################
     for key, val in bd_list.items():
-        #print(key, val)
-        #print(val['rssi'])
         if key!=None:
             rssi_list.append(int(val['rssi']))
             mac_list.append(str(key))
@@ -220,11 +224,7 @@ if __name__ == "__main__":
 
     for i in range(0, len(bd_addr)):
         bool_val = 0
-        #print("Searching "+mac_list[i])
         MAC_List=MAC.search_in_DB(bd_addr[i]) #I'll send the list to all the rasberrypi, or just one MAC and I'll find the
-        # other with the same procedure of above
-        #print('ter')
-        #print(MAC_List)
         BeaconID = MAC.read_beaconID(MAC_List[0])
         BEACON_list.append(BeaconID)
         RSSI_list=[]
@@ -238,12 +238,10 @@ if __name__ == "__main__":
         #print(MAC_List)
 
         if bool_val<=1:
-            #print(BeaconID)
             if MAC_List != 'not in range':
                 print('>>>>>>>> BEACON: '+BeaconID[0])
                 for key, val in bd_list.items():
                     if key in MAC_List:
-                        # print(val['rssi'])
                         if val['rssi'] != None:
                             #print(val['rssi'])
                             RSSI_list.append(int(val['rssi']))
@@ -253,13 +251,14 @@ if __name__ == "__main__":
                 print(RSSI_average)
 
 
-                Beacon_flag='1'
-                color='white'
-                placeID='3403'
+                Beacon_flag='1' #######################################------> RENDI A SCELTA
+                color='white'####################################---->RENDI A SCELTA
+                placeID='3403' #######################################------> RENDI A SCELTA
                 starting_time = strftime("%H%M%S", localtime())  # hour, minute, second
                 starting_day = strftime("%d%m%y", localtime())
                 timestamp=starting_time+' '+starting_day
 
+                #Beacon dictionary
                 Beacon_dictionary=\
                 {
                     "id":str(BeaconID[0]),
@@ -271,15 +270,18 @@ if __name__ == "__main__":
 
                 }
 
-               # Beacon_dictionary={{str(a):str(b), {str(c):str(d), {str(e):str(f), {str(g):str(h), {str(l):str(m), {str(n):str(o)} for a,b,c,d,e,f,g,h,i,l,m,n,o in zip(beacon_key, beacon_value)}
-                #Beacon_dictionary=dict(zip(beacon_key,beacon_value))
-                print(Beacon_dictionary)
 
-                #Beacon_dictionary=dict()
+
+
 
                 with open(BeaconID[0]+'.json', 'w') as f:
                     json_string=json.dump(Beacon_dictionary,f)
-                #[Beacon_dictionary.update({k}) for k in (zip_dict)]
+
+
+
+                #call the publish, so I can pass the jason file name to the Main
+                pub.publishing(BeaconID[0]+'.json', broker, topic_name)
+
 
                 #print(Beacon_dictionary)
 
@@ -288,5 +290,7 @@ if __name__ == "__main__":
                 print(">>>>> NOT A BEACON")
         else:
             continue
+
+
 
 

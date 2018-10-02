@@ -197,10 +197,7 @@ if __name__ == "__main__":
         if int(val['rssi']) == max(rssi_list):
             bd_addr.append(key)
 
-    ############ select from the database all the address associated to the same beacon ############
-    #print('>>>>>>>>>')
-    #print(bd_addr)
-    #print('><>>>>>>>>><')
+
     for i in range(0, len(mac_list)):
         bool_val = 0
         #print("Searching " + mac_list[i])

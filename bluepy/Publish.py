@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 import logging
-import paho.mqtt.client as mqtt
+#import paho.mqtt.client as mqtt
 import sys
 import os
 from collections import namedtuple
@@ -20,12 +20,15 @@ logging.basicConfig(filename= 'Log/rasp'+rasp_id+'.log',level=logging.INFO, form
 
 
 
-def publishing(json_file, broker, topic_name):
+def publishing_start(json_file, broker, topic_name):
     #client.publish(topic_name[0], json_file)
     #
     logging.info("publishing ...")
     os.system("mosquitto_pub -h "+broker+" -m "+json_file+" -t "+ topic_name[0])
     logging.info("The info of the beacon are in : "+ json_file)
 
+
+def publishing_stop(broker, topic_name):
+    os.system("mosquitto_pub -h " + broker + " -m STOP  -t " + topic_name[1])
 
 

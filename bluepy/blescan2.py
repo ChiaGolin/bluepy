@@ -87,7 +87,7 @@ class ScanPrint(btle.DefaultDelegate):
         if dev.rssi < self.opts.sensitivity:
             return
 
-        print('    Device (%s): %s (%s), %d dBm %s' %
+        '''print('    Device (%s): %s (%s), %d dBm %s' %
               (status,
                ANSI_WHITE + dev.addr + ANSI_OFF,
                dev.addrType,
@@ -99,7 +99,7 @@ class ScanPrint(btle.DefaultDelegate):
                 print('\t' + desc + ': \'' + ANSI_CYAN + val + ANSI_OFF + '\'')
             else:
                 print('\t' + desc + ': <' + val + '>')
-                manufacturer = (val if 'Manufacturer' in desc else None)
+                #manufacturer = (val if 'Manufacturer' in desc else None)'''
 
         if not dev.scanData:
             print('\t(no data)')
@@ -108,7 +108,8 @@ class ScanPrint(btle.DefaultDelegate):
             {'rssi': dev.rssi,
              'conn': ('connectable' if dev.connectable else 'not connectable'),
              'add_type': dev.addrType,
-             'manufacturer': manufacturer}
+             #'manufacturer': manufacturer
+              }
 
         bd_list[dev.addr] = \
             {
@@ -121,14 +122,14 @@ class ScanPrint(btle.DefaultDelegate):
         }
         # minRSSI_bd
 
-        print()
+       # print()
 
 
-def main():
+def main(N):
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--hci', action='store', type=int, default=0,
                         help='Interface number for scan')
-    parser.add_argument('-t', '--timeout', action='store', type=int, default=4,
+    parser.add_argument('-t', '--timeout', action='store', type=int, default=N,
                         help='Scan delay, 0 for continuous')
     parser.add_argument('-s', '--sensitivity', action='store', type=int, default=-128,
                         help='dBm value for filtering far devices')
@@ -156,12 +157,12 @@ def main():
             if not d.connectable:
                 continue
 
-            print("    Connecting to", ANSI_WHITE + d.addr + ANSI_OFF + ":")
+            #print("    Connecting to", ANSI_WHITE + d.addr + ANSI_OFF + ":")
 
             dev = btle.Peripheral(d)
             dump_services(dev)
             dev.disconnect()
-            print()
+            #print()
 
 
 def RSSI_ave(list_RSSI):
@@ -169,74 +170,10 @@ def RSSI_ave(list_RSSI):
     return average
 
 
-if __name__ == "__main__":
-    main()
-    ble_list = []
-    # pp.pprint(bluetooth_devices)
-    # print('**************************')
-    # pp.pprint(bd_list)
+def ScanScan(N):
+    main(N)
+    #pp.pprint(bd_list)
+    return bluetooth_devices
 
-    key_list = []
-    rssi_list = []
-    bd_addr = []
-    mac_list=[]
-    Tot_MAC_LIST = []
-    BEACON_list=[]
+#ScanScan(4)
 
-    ################### create list #################
-    for key, val in bd_list.items():
-        print(key, val)
-        # print(val['rssi'])
-        if key != None:
-            rssi_list.append(int(val['rssi']))
-            mac_list.append(str(key))
-
-    ############# find beacon address (max rssi) ######## if it's the first step
-
-    for key, val in bd_list.items():
-        if int(val['rssi']) == max(rssi_list):
-            bd_addr.append(key)
-
-
-    for i in range(0, len(mac_list)):
-        bool_val = 0
-        #print("Searching " + mac_list[i])
-
-        MAC_List  = MAC.search_in_DB(mac_list[i])  # I'll send the list to all the rasberrypi, or just one MAC and I'll find the
-        # other with the same procedure of above
-        # print('ter')
-        #print(MAC_List)
-
-        BeaconID = MAC.read_beaconID(MAC_List[0])
-        BEACON_list.append(BeaconID)
-        RSSI_list = []
-        Tot_MAC_LIST.append(MAC_List[0])
-        #print(MAC_List)
-        #print('*************************************')
-        #print(Tot_MAC_LIST)
-
-        for i in range(0, len(BEACON_list)):
-            #print(BeaconID)
-           # print(BEACON_list)
-            if BeaconID==BEACON_list[i]:
-                bool_val=bool_val+1
-
-        if bool_val<=1:
-            #print(BeaconID)
-            if MAC_List != 'not in range':
-                print('>>>>>>>> BEACON: '+BeaconID[0])
-                for key, val in bd_list.items():
-                    if key in MAC_List:
-                        # print(val['rssi'])
-                        if val['rssi'] != None:
-                            #print(val['rssi'])
-                            RSSI_list.append(float(val['rssi']))
-
-                #print(RSSI_list)
-                RSSI_average = RSSI_ave(RSSI_list)
-                #print(RSSI_average)
-
-            else:
-                print(">>>>>>>>> NOT A BEACON")
-        else:
-            continue

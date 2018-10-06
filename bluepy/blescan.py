@@ -280,7 +280,7 @@ if __name__ == "__main__":
 
 
                 #call the publish, so I can pass the jason file name to the Main
-                pub.publishing(BeaconID[0]+'.json', broker, topic_name)
+                pub.publishing_start(BeaconID[0]+'.json', broker, topic_name)
 
 
 
@@ -290,7 +290,6 @@ if __name__ == "__main__":
                 print(">>>>> NOT A BEACON")
         else:
             continue
-
 
 
 

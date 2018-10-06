@@ -1,3 +1,4 @@
+
 import threading
 import signal
 import time
@@ -52,26 +53,29 @@ MAcList=[]
 def kill():
     os.system("pkill -f Main.p")
 
-def scanning_list(mqtt_data):
-    print(mqtt_data['id'])
-    for i in range(0, len(mqtt_data["mac"])):
-        MAcList.append(mqtt_data["mac"][i])
+def scanning_list(MQTT_DATA):
+    #print("scanning")
+    #print(MQTT_DATA)
+    print(MQTT_DATA['id'])
+    for i in range(0, len(MQTT_DATA["mac"])):
+        MAcList.append(MQTT_DATA["mac"][i])
     rssi=-100
 
     #rendilo continuo fino all'arrivo o allo scadere del timer
-    Scan.read_dict(MAcList, rssi, mqtt_data["id"])
+    Scan.read_dict(MAcList, rssi, MQTT_DATA["id"])
 
-def timer_scan(mqtt_data, TIMER):
+def timer_scan(MQTT_DATA, TIMER):
     timer = Timer(TIMER, kill)
     timer.start()
     if True:
-        scanning_list(mqtt_data)
+        scanning_list(MQTT_DATA)
 
-def single_process():
-
+def single_process(MQTT_DATA):
+    print("single process")
+    print(MQTT_DATA)
 
     t1=threading.Thread(target=Sub.subscription, args=(broker, topic_name[1]))
-    t2 = threading.Thread(target=timer_scan, args=(mqtt_Data, 360.0))
+    t2 = threading.Thread(target=timer_scan, args=(MQTT_DATA, 360.0))
 
     t1.start()
     t2.start()
@@ -86,6 +90,7 @@ if __name__ == "__main__":
     #thread_queue=Queue.Queue(BUF_SIZE)
     thread=[]
     ID_list=[]
+    MQTT_DATA={}
   #  mqtt_Data = {}
 #
     logging.info("*******************************************")
@@ -102,24 +107,30 @@ if __name__ == "__main__":
     mqttStart_q = Queue
 
         #global mqtt_Data
-    mqtt_Data = Sub.subscription(broker, topic_name[0])
-    #t=threading.Thread(target=Sub.subscription, args=(broker, topic_name[0], mqtt_Data))
-    #t.setDaemon(True)
-    #t.start()
-    print("prima join")
-    #t.join()
-    print(",saòdx,as")
+    while True:
+        mqtt_Data = Sub.subscription(broker, topic_name[0])
+        #t=threading.Thread(target=Sub.subscription, args=(broker, topic_name[0], mqtt_Data))
+        #t.setDaemon(True)
+        #t.start()
+        print("prima join")
+        #t.join()
+        print(",saòdx,as")
 
-    #mqtt_Data=Sub.subscription(broker, topic_name[0])
-    print("**********************************************")
-    print(mqtt_Data)
-    print("**********************************************")
-    if len(mqtt_Data)>0:
-        if mqtt_Data["id"][0] not in ID_list:
-            print("sono nel maledettissimo if")
-            t1=threading.Thread(target=single_process)
-            t1.start()
-    #mqtt_Data.clear()
+        #mqtt_Data=Sub.subscription(broker, topic_name[0])
+        print("**********************************************")
+        print(mqtt_Data)
+        print("**********************************************")
+        MQTT_DATA=mqtt_Data
+        print("+++++++++++++++++++++++++++++++++++++++++++++++")
+        print(MQTT_DATA)
+        print("+++++++++++++++++++++++++++++++++++++++++++++++")
+        if len(MQTT_DATA)>0:
+            if MQTT_DATA["id"] not in ID_list:
+                print("sono nel maledettissimo if")
+                print(MQTT_DATA)
+                t1=threading.Thread(target=single_process, args=(dict(MQTT_DATA),))
+                t1.start()
+        mqtt_Data.clear()
 
 
 

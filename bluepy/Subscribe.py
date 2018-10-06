@@ -39,24 +39,26 @@ def on_message(client, userdata, msg):
         logging.info("starting msg is received")
 
         try:
-            print("sono dentro il try")
-            with open(str(msg.payload.decode("utf-8"))) as f:
-                mqtt_data = json.load(f)
-                logging.info("loading json file "+ str(msg.payload.decode("utf-8")))
+            if len(msg.payload)>0:
+                print("sono dentro il try")
+                with open(str(msg.payload.decode("utf-8"))) as f:
+                    mqtt_data = json.load(f)
+                    print("PAYLOAD NON ZERO")
+                    logging.info("loading json file "+ str(msg.payload.decode("utf-8")))
 
         except ValueError as e:
             logging.error("Malformed json %s. Json: %s", e, msg_mqtt_raw)
             msg_mqtt = msg_mqtt_raw[:-1]
             msg_mqtt = msg_mqtt[1:]
 
-        print(mqtt_data)
-        '''start_msg = StartMsg(id=mqtt_data["id"][0],
-                             mac_address=mqtt_data["mac_address"][0],
-                             place_id=mqtt_data["place_id"][0],
-                             timestamp=mqtt_data["timestamp"][0],
-                             color=mqtt_data["color"][0],
-                             beacon_flag=mqtt_data["beacon_flag"][0])
-        print(start_msg)'''
+            #print(mqtt_data)
+            '''start_msg = StartMsg(id=mqtt_data["id"][0],
+                                 mac_address=mqtt_data["mac_address"][0],
+                                 place_id=mqtt_data["place_id"][0],
+                                 timestamp=mqtt_data["timestamp"][0],
+                                 color=mqtt_data["color"][0],
+                                 beacon_flag=mqtt_data["beacon_flag"][0])
+            print(start_msg)'''
 
     elif msg.topic == "topic/rasp4/directions/stop":
         print("stop message: "+str(msg.payload.decode("utf-8")))
@@ -89,7 +91,7 @@ def subscription(broker, topic_name):
         client = mqtt.Client("client-001")
     else:
         client = mqtt.Client("client-002")
-    print(mqtt_data)
+    #print(mqtt_data)
 
     client.on_message = on_message
     print("connecting to broker ", broker)
@@ -108,7 +110,7 @@ def subscription(broker, topic_name):
         client.loop_start()
         print(topic_name)
         client.subscribe(topic_name, qos=1)
-       # client.publish(topic_name,'ciaooooooooooooo')
+
         time.sleep(10)
         #client.disconnect()
 
@@ -130,30 +132,20 @@ print(topic_name)
 logging.info("creation client MQTT")
 # callback messages
 client.on_subscribe = on_subscribe
-
 client.on_connect = on_connect
-
 print("Connecting to broker " + broker)
-
-
 # client subscribe both the topic (start and stop)
-
 mqtt_data.clear()
-
 while len(mqtt_data) <= 0:
     client.loop_start()
     client.subscribe(topic_name, qos=1)
-
     # client.subscribe(topic_name[1], qos=1)
     logging.info("subscribing ... ")
     time.sleep(5)
     print(mqtt_data)
     client.loop_stop()
-
 logging.info("creation of Beacon dictionary: ")
 return mqtt_data
-
-
  # create client object client1.on_publish = on_publish #assign function to callback client1.connect(broker,port) #establish connection client1.publish("house/bulb1","on")
     ######Bind function to callback
     client.on_message = on_message

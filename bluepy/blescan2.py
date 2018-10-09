@@ -125,11 +125,11 @@ class ScanPrint(btle.DefaultDelegate):
        # print()
 
 
-def main(N):
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--hci', action='store', type=int, default=0,
                         help='Interface number for scan')
-    parser.add_argument('-t', '--timeout', action='store', type=int, default=N,
+    parser.add_argument('-t', '--timeout', action='store', type=int, default=3,
                         help='Scan delay, 0 for continuous')
     parser.add_argument('-s', '--sensitivity', action='store', type=int, default=-128,
                         help='dBm value for filtering far devices')
@@ -170,8 +170,8 @@ def RSSI_ave(list_RSSI):
     return average
 
 
-def ScanScan(N):
-    main(N)
+def ScanScan():
+    main()
     #pp.pprint(bd_list)
     return bluetooth_devices
 

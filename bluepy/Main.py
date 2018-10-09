@@ -26,6 +26,7 @@ import _thread
 
 import Subscribe as Sub
 import Scan
+import blescan2 as ble
 
 BUF_SIZE = 10
 
@@ -53,16 +54,14 @@ MAcList=[]
 def kill():
     os.system("pkill -f Main.p")
 
-def scanning_list(MQTT_DATA):
-    #print("scanning")
-    #print(MQTT_DATA)
-    print(MQTT_DATA['id'])
+def scanning_list(MQTT_DATA, ble_list):
+    #print("sono nella scanning list")
     for i in range(0, len(MQTT_DATA["mac"])):
         MAcList.append(MQTT_DATA["mac"][i])
     rssi=-100
 
     #rendilo continuo fino all'arrivo o allo scadere del timer
-    Scan.read_dict(MAcList, rssi, MQTT_DATA["id"])
+    Scan.read_dict(MAcList, rssi, MQTT_DATA["id"], ble_list)
 
 def timer_scan(MQTT_DATA, TIMER):
     timer = Timer(TIMER, kill)
@@ -85,12 +84,17 @@ def single_process(MQTT_DATA):
 
 
 
+
 if __name__ == "__main__":
 
     #thread_queue=Queue.Queue(BUF_SIZE)
-    thread=[]
-    ID_list=[]
-    MQTT_DATA={}
+    threads=[]
+    array_dict=[]
+    size=0
+    bl_list={}
+    prov={}
+    open("Thread.txt", 'w').close()
+
   #  mqtt_Data = {}
 #
     logging.info("*******************************************")
@@ -106,31 +110,57 @@ if __name__ == "__main__":
     # do some other stuff in the main process
     mqttStart_q = Queue
 
+    t_mqtt = Sub.subscribing_thread(topic_name[0])
+    t_mqtt.setDaemon(True)
+    t_mqtt.start()
         #global mqtt_Data
     while True:
-        mqtt_Data = Sub.subscription(broker, topic_name[0])
-        #t=threading.Thread(target=Sub.subscription, args=(broker, topic_name[0], mqtt_Data))
-        #t.setDaemon(True)
-        #t.start()
-        print("prima join")
-        #t.join()
-        print(",saòdx,as")
 
-        #mqtt_Data=Sub.subscription(broker, topic_name[0])
-        print("**********************************************")
-        print(mqtt_Data)
-        print("**********************************************")
-        MQTT_DATA=mqtt_Data
-        print("+++++++++++++++++++++++++++++++++++++++++++++++")
-        print(MQTT_DATA)
-        print("+++++++++++++++++++++++++++++++++++++++++++++++")
-        if len(MQTT_DATA)>0:
-            if MQTT_DATA["id"] not in ID_list:
-                print("sono nel maledettissimo if")
-                print(MQTT_DATA)
-                t1=threading.Thread(target=single_process, args=(dict(MQTT_DATA),))
-                t1.start()
-        mqtt_Data.clear()
+        #print("INIZIO WHILE")
+        ble_list=ble.ScanScan()
+
+        #print("SUPERATO IL THREAD")
+        time.sleep(5)
+
+
+
+        if os.path.getsize("Thread.txt") > 0:
+            #print(size)
+             #print(os.path.getsize("Thread.txt"))
+
+            with open("Thread.txt", "r") as f:
+
+
+                while True:
+                    line = f.readline()
+                    lines=(line.rstrip("\n"))
+                    if lines not in threads:
+                        threads.append(lines)
+                    # check if line is not empty
+                    if not line:
+                        threads.remove("")
+                        size=os.path.getsize("Thread.txt")
+                        break
+
+        for i in range (0, len(threads)):
+            with open(threads[i]) as f:
+                prov=json.load(f)
+                array_dict.append(prov)
+
+        for i in range (0, len(array_dict)):
+            if array_dict[i]['id']+".json"==threads[i]:
+                scanning_list(array_dict[i], ble_list)
+
+
+        #print(threads)
+        threads=[]
+        array_dict=[]
+
+
+
+
+
+
 
 
 
@@ -142,6 +172,12 @@ if __name__ == "__main__":
 
 
 
+        #mqtt_Data = Sub.subscription(broker, topic_name[0])
+        #t=threading.Thread(target=Sub.subscription, args=(broker, topic_name[0]))
+        #t.setDaemon(True)
+
+        #t.start()
+        #t.join()
 
 
 
@@ -154,9 +190,3 @@ if __name__ == "__main__":
     print ("SM4RT_D1R3CT10Nz v0.3 thread", rasp_id)
     logging.info("Starting main...")
   '''
-
-
-
-
-
-

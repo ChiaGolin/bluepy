@@ -6,19 +6,26 @@ import os
 from collections import namedtuple
 import pprint as pp
 import time
+from threading import *
 
-
+import threading
+import Publish as Pub
 #global variable
 mqtt_data={}
 
 
 broker = "127.0.0.1" #broker as my local address
-#topic_name =["topic/rasp4/directions/start", "topic/rasp4/directions/stop"]
+topic_name =["topic/rasp4/directions/start", "topic/rasp4/directions/stop"]
 
 log_path=os.system('mkdir -p Log')
 rasp_id ="A"
 logging.basicConfig(filename= 'Log/rasp'+rasp_id+'.log',level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+def kill(val, val1):
+    print("timer scaduto")
+    print("topic/rasp4/directions/stop/" + val)
+    Pub.publishing_stop(broker, "topic/rasp4/directions/stop/" + val)
+    os.system("mosquitto_pub -h " + broker + " -m "+val1+"  -t " +"topic/rasp4/directions/stop/" + val)
 
 def on_connect(client, obj, flags, rc):
     print("connection result: " + str(rc))
@@ -27,12 +34,13 @@ def on_connect(client, obj, flags, rc):
 
 
 def on_message(client, userdata, msg):
-    global mqtt_data
-    mqtt_data={}
+
+
     logging.info("Receiving a msg with payload " + str(msg.payload.decode("utf-8")))
-    print("Receiving a msg with payload %s", str(msg.payload.decode("utf-8")))
+    print("Receiving a msg with payload ", str(msg.payload.decode("utf-8")))
     msg_mqtt_raw = str(msg.payload.decode("utf-8"))
     print(msg.topic)
+    print("topic/rasp4/directions/stop/"+str(msg.payload.decode("utf-8"))[0])
 
 
     if msg.topic == "topic/rasp4/directions/start":
@@ -41,10 +49,18 @@ def on_message(client, userdata, msg):
         try:
             if len(msg.payload)>0:
                 print("sono dentro il try")
-                with open(str(msg.payload.decode("utf-8"))) as f:
-                    mqtt_data = json.load(f)
-                    print("PAYLOAD NON ZERO")
+                with open("Thread.txt", "a") as f:
+                    f.write(str(msg.payload.decode("utf-8")))
+                    f.write("\n")
+                    #print("PAYLOAD NON ZERO")
                     logging.info("loading json file "+ str(msg.payload.decode("utf-8")))
+                    #print("starting timer")
+                    t = threading.Timer(360.0, kill, [str(msg.payload.decode("utf-8"))[0], str(msg.payload.decode("utf-8"))[0]])
+                    t.start()
+                    t_mqtt = subscribing_thread(topic_name[1]+"/"+str(msg.payload.decode("utf-8"))[0])
+                    print(topic_name[1]+"/"+str(msg.payload.decode("utf-8"))[0])
+                    t_mqtt.setDaemon(True)
+                    t_mqtt.start()
 
         except ValueError as e:
             logging.error("Malformed json %s. Json: %s", e, msg_mqtt_raw)
@@ -60,18 +76,13 @@ def on_message(client, userdata, msg):
                                  beacon_flag=mqtt_data["beacon_flag"][0])
             print(start_msg)'''
 
-    elif msg.topic == "topic/rasp4/directions/stop":
+    elif msg.topic == "topic/rasp4/directions/stop/"+str(msg.payload.decode("utf-8"))[0]:
         print("stop message: "+str(msg.payload.decode("utf-8")))
+        print("OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
         logging.info("Stop tracking")
-        os.system("pkill -f Main.py")
-
-
-#def on_message(client, userdata, message):
- #   time.sleep(1)
-  #  print("received message =",str(message.payload.decode("utf-8")))
-
-
-
+        os.system("sed -i '/"+msg.topic[-1]+".json/d' ./Thread.txt")
+        sys.exit()
+        #os.system("pkill -f Main.py")
 
 
 
@@ -85,79 +96,40 @@ def on_log(client, obj, level, string):
 def print_msg(client, userdata, message):
     print("%s : %s" % (message.topic, message.payload))
 
+class subscribing_thread(threading.Thread):
+    def __init__(self, topic_name):
+        threading.Thread.__init__(self)
+        self.broker="127.0.0.1"
+        self.topic_name1=topic_name
+        self.client = mqtt.Client()
+        #self.topic_name2="topic/rasp4/directions/stop"
 
-def subscription(broker, topic_name):
-    if topic_name=="topic/rasp4/directions/start":
-        client = mqtt.Client("client-001")
-    else:
-        client = mqtt.Client("client-002")
-    #print(mqtt_data)
+    def run(self):
 
-    client.on_message = on_message
-    print("connecting to broker ", broker)
-    try:
-        print("mi sto connettendo")
-        client.connect(broker)
-        print("ce l'ho fatta")
-        logging.info("connect to the broker")
+        self.client.on_message=on_message
+        print("connecting to broker ", self.broker)
+        try:
+            print("mi sto connettendo")
+            self.client.connect(self.broker)
+            print("ce l'ho fatta")
+            logging.info("connect to the broker")
 
-    except:
-        print("can't connect")
-        logging.error("can't connect to broker")
-        sys.exit(1)
+        except:
+            print("can't connect")
+            logging.error("can't connect to broker")
+            sys.exit(1)
+        print(self.topic_name1)
+        #client.loop_start()
+        self.client.subscribe(self.topic_name1, qos=1)
 
-    while len(mqtt_data)<=0:
-        client.loop_start()
-        print(topic_name)
-        client.subscribe(topic_name, qos=1)
-
-        time.sleep(10)
-        #client.disconnect()
-
-        client.loop_stop()
-        print("sono qui")
-    client.disconnect()
-    print("sto per uscire dalla funz sub")
-    return mqtt_data
-
-    #client.loop_forever()
+        print("Subscribed!\n")
+        # client.disconnect()
+        #client.loop_stop()
+        self.client.loop_forever()
 
 
 
-#subscription(broker,"topic/rasp4/directions/start")
-'''
-# create a client
-client = mqtt.Client("client-001")
-print(topic_name)
-logging.info("creation client MQTT")
-# callback messages
-client.on_subscribe = on_subscribe
-client.on_connect = on_connect
-print("Connecting to broker " + broker)
-# client subscribe both the topic (start and stop)
-mqtt_data.clear()
-while len(mqtt_data) <= 0:
-    client.loop_start()
-    client.subscribe(topic_name, qos=1)
-    # client.subscribe(topic_name[1], qos=1)
-    logging.info("subscribing ... ")
-    time.sleep(5)
-    print(mqtt_data)
-    client.loop_stop()
-logging.info("creation of Beacon dictionary: ")
-return mqtt_data
- # create client object client1.on_publish = on_publish #assign function to callback client1.connect(broker,port) #establish connection client1.publish("house/bulb1","on")
-    ######Bind function to callback
-    client.on_message = on_message
-    #####
-    print("connecting to broker ", broker)
-    client.connect(broker)  # connect
-    client.loop_start()  # start loop to process received messages
-    print("subscribing ")
-    client.subscribe(topic_name)  # subscribe
-    time.sleep(2)
-    print("publishing ")
-    client.publish(topic_name, "on")  # publish
-    time.sleep(4)
-    client.disconnect()  # disconnect
-    client.loop_stop()  # stop loop'''
+
+
+
+

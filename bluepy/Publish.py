@@ -28,7 +28,7 @@ def publishing_start(json_file, broker, topic_name):
     logging.info("The info of the beacon are in : "+ json_file)
 
 
-def publishing_stop(broker, topic_name):
-    os.system("mosquitto_pub -h " + broker + " -m STOP  -t " + topic_name[1])
+def publishing_stop(broker, topic_name, id):
+    os.system("mosquitto_pub -h " + broker + " -m "+id+".json  -t " + topic_name[1])
 
 

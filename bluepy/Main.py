@@ -11,7 +11,7 @@ import logging
 import os
 import paho.mqtt.client as mqtt
 import pathlib
-import xml.etree.ElementTree as ET
+
 import pprint as pp
 from collections import namedtuple
 from datetime import datetime
@@ -21,6 +21,7 @@ from threading import *
 from multiprocessing import Process, Queue
 from multiprocessing.pool import ThreadPool
 import _thread
+import queue
 
 #my imports
 
@@ -36,6 +37,8 @@ starting_day = strftime("%d%m%y", localtime())
 
 log_path=os.system('mkdir -p Log')
 rasp_id ="A"
+place_id="0001"
+
 logging.basicConfig(filename= 'Log/rasp'+rasp_id+'.log',level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 global mqtt_Data
@@ -56,12 +59,16 @@ def kill():
 
 def scanning_list(MQTT_DATA, ble_list):
     #print("sono nella scanning list")
+    print(place_id)
+
     for i in range(0, len(MQTT_DATA["mac"])):
         MAcList.append(MQTT_DATA["mac"][i])
+
+
     rssi=-100
 
     #rendilo continuo fino all'arrivo o allo scadere del timer
-    Scan.read_dict(MAcList, rssi, MQTT_DATA["id"], ble_list)
+    Scan.read_dict(MAcList, rssi, MQTT_DATA["id"], ble_list, place_id )
 
 def timer_scan(MQTT_DATA, TIMER):
     timer = Timer(TIMER, kill)
@@ -83,12 +90,10 @@ def single_process(MQTT_DATA):
 
 
 
-
-
 if __name__ == "__main__":
 
-    #thread_queue=Queue.Queue(BUF_SIZE)
-    threads=[]
+
+    threads="None"
     array_dict=[]
     size=0
     bl_list={}
@@ -108,85 +113,63 @@ if __name__ == "__main__":
 
 
     # do some other stuff in the main process
-    mqttStart_q = Queue
+    sub_q=queue.Queue(BUF_SIZE)
+    del_q = queue.Queue(BUF_SIZE)
 
-    t_mqtt = Sub.subscribing_thread(topic_name[0])
+    #map_root = open_map('map.xml')
+    #print(str(map_root))
+
+
+    t_mqtt = Sub.subscribing_thread(topic_name, sub_q, del_q)
     t_mqtt.setDaemon(True)
     t_mqtt.start()
-        #global mqtt_Data
+
+
     while True:
+        #canc=0
 
-        #print("INIZIO WHILE")
         ble_list=ble.ScanScan()
+        time.sleep(1)
 
-        #print("SUPERATO IL THREAD")
-        time.sleep(5)
+        if not sub_q.empty():
 
+            threads=sub_q.get()
+            print("-------------"+threads)
 
+            with open(threads) as f:
+                try:
+                    prov=json.load(f)
+                    if prov not in array_dict:
+                        array_dict.append(prov)
 
-        if os.path.getsize("Thread.txt") > 0:
-            #print(size)
-             #print(os.path.getsize("Thread.txt"))
+                    else:
+                        print("c'è già")
+                except:
+                    print("Malformed json")
 
-            with open("Thread.txt", "r") as f:
-
-
-                while True:
-                    line = f.readline()
-                    lines=(line.rstrip("\n"))
-                    if lines not in threads:
-                        threads.append(lines)
-                    # check if line is not empty
-                    if not line:
-                        threads.remove("")
-                        size=os.path.getsize("Thread.txt")
-                        break
-
-        for i in range (0, len(threads)):
-            with open(threads[i]) as f:
-                prov=json.load(f)
-                array_dict.append(prov)
-
-        for i in range (0, len(array_dict)):
-            if array_dict[i]['id']+".json"==threads[i]:
-                scanning_list(array_dict[i], ble_list)
+        #print(str(array_dict))
+        if len(array_dict)>0:
+            for i in range (0, len(array_dict)):
+                 scanning_list(array_dict[i], ble_list)
 
 
-        #print(threads)
+        if not del_q.empty():
+            del_value=del_q.get()
+            i=0
+            canc=0
+            while canc==0 and len(array_dict)>0 and i<len(array_dict):
+                print("i= "+str(i))
+                if array_dict[i]['id']+".json"==del_value:
+
+                    del array_dict[i]
+                    canc=1
+                i=i+1
+
+
         threads=[]
-        array_dict=[]
 
 
 
 
 
 
-
-
-
-   #logging.in("LOCAL ENVIRONMENT")
-    #logging.info("*******************************************")
-
-
-
-
-
-
-        #mqtt_Data = Sub.subscription(broker, topic_name[0])
-        #t=threading.Thread(target=Sub.subscription, args=(broker, topic_name[0]))
-        #t.setDaemon(True)
-
-        #t.start()
-        #t.join()
-
-
-
-
-
-#### MAIN ####
-'''if __name__ == "__main__":
-    logging.info("_____________________________")
-    logging.info("SM4RT_D1R3CT10Nz v0.3 thread")
-    print ("SM4RT_D1R3CT10Nz v0.3 thread", rasp_id)
-    logging.info("Starting main...")
-  '''

@@ -175,5 +175,5 @@ def ScanScan():
     #pp.pprint(bd_list)
     return bluetooth_devices
 
-#ScanScan(4)
+ScanScan()
 

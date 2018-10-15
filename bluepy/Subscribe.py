@@ -27,62 +27,56 @@ def kill(val, val1):
     Pub.publishing_stop(broker, "topic/rasp4/directions/stop/" + val)
     os.system("mosquitto_pub -h " + broker + " -m "+val1+"  -t " +"topic/rasp4/directions/stop/" + val)
 
-def on_connect(client, obj, flags, rc):
+
+
+def on_connect(self, client, obj, flags, rc):
     print("connection result: " + str(rc))
 
+class Receive_on_message:
+
+    def __init__(self, queue_sub, del_queue):
+        self.queue_sub = queue_sub
+        self.del_queue=del_queue
 
 
 
-def on_message(client, userdata, msg):
+
+    def on_message(self, client,userdata, msg):
 
 
-    logging.info("Receiving a msg with payload " + str(msg.payload.decode("utf-8")))
-    print("Receiving a msg with payload ", str(msg.payload.decode("utf-8")))
-    msg_mqtt_raw = str(msg.payload.decode("utf-8"))
-    print(msg.topic)
-    print("topic/rasp4/directions/stop/"+str(msg.payload.decode("utf-8"))[0])
+
+        logging.info("Receiving a msg with payload " + str(msg.payload.decode("utf-8")))
+        print("Receiving a msg with payload ", str(msg.payload.decode("utf-8")))
+        Msg = str(msg.payload.decode("utf-8"))
+
+        print(msg.topic)
 
 
-    if msg.topic == "topic/rasp4/directions/start":
-        logging.info("starting msg is received")
+        if msg.topic == "topic/rasp4/directions/start":
+            logging.info("starting msg is received")
 
-        try:
+
             if len(msg.payload)>0:
-                print("sono dentro il try")
-                with open("Thread.txt", "a") as f:
-                    f.write(str(msg.payload.decode("utf-8")))
-                    f.write("\n")
-                    #print("PAYLOAD NON ZERO")
-                    logging.info("loading json file "+ str(msg.payload.decode("utf-8")))
-                    #print("starting timer")
-                    t = threading.Timer(360.0, kill, [str(msg.payload.decode("utf-8"))[0], str(msg.payload.decode("utf-8"))[0]])
-                    t.start()
-                    t_mqtt = subscribing_thread(topic_name[1]+"/"+str(msg.payload.decode("utf-8"))[0])
-                    print(topic_name[1]+"/"+str(msg.payload.decode("utf-8"))[0])
-                    t_mqtt.setDaemon(True)
-                    t_mqtt.start()
+                self.queue_sub.put(Msg) #scrive il nome del json file
+                logging.info("loading json file "+ str(msg.payload.decode("utf-8")))
+                t = threading.Timer(360.0, kill, [str(msg.payload.decode("utf-8"))[0], str(msg.payload.decode("utf-8"))[0]])
+                t.start()
+                '''start_msg = StartMsg(id=mqtt_data["id"][0],
+                                     mac_address=mqtt_data["mac_address"][0],
+                                     place_id=mqtt_data["place_id"][0],
+                                     timestamp=mqtt_data["timestamp"][0],
+                                     color=mqtt_data["color"][0],
+                                     beacon_flag=mqtt_data["beacon_flag"][0])
+                print(start_msg)'''
 
-        except ValueError as e:
-            logging.error("Malformed json %s. Json: %s", e, msg_mqtt_raw)
-            msg_mqtt = msg_mqtt_raw[:-1]
-            msg_mqtt = msg_mqtt[1:]
+        elif msg.topic == "topic/rasp4/directions/stop":
 
-            #print(mqtt_data)
-            '''start_msg = StartMsg(id=mqtt_data["id"][0],
-                                 mac_address=mqtt_data["mac_address"][0],
-                                 place_id=mqtt_data["place_id"][0],
-                                 timestamp=mqtt_data["timestamp"][0],
-                                 color=mqtt_data["color"][0],
-                                 beacon_flag=mqtt_data["beacon_flag"][0])
-            print(start_msg)'''
+            print("stop message: "+str(msg.payload.decode("utf-8")))
+            logging.info("Stop tracking")
+            self.del_queue.put(Msg) # scrive il nome del json file
 
-    elif msg.topic == "topic/rasp4/directions/stop/"+str(msg.payload.decode("utf-8"))[0]:
-        print("stop message: "+str(msg.payload.decode("utf-8")))
-        print("OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
-        logging.info("Stop tracking")
-        os.system("sed -i '/"+msg.topic[-1]+".json/d' ./Thread.txt")
-        sys.exit()
-        #os.system("pkill -f Main.py")
+
+
 
 
 
@@ -97,34 +91,37 @@ def print_msg(client, userdata, message):
     print("%s : %s" % (message.topic, message.payload))
 
 class subscribing_thread(threading.Thread):
-    def __init__(self, topic_name):
+    def __init__(self, topic_name, queue, del_queue):
         threading.Thread.__init__(self)
         self.broker="127.0.0.1"
         self.topic_name1=topic_name
         self.client = mqtt.Client()
+        self.queue = queue
+        self.del_queue = del_queue
         #self.topic_name2="topic/rasp4/directions/stop"
 
     def run(self):
+        receiver =  Receive_on_message(self.queue, self.del_queue)
 
-        self.client.on_message=on_message
+        #self.client.on_message=Receive_on_message.on_message
+        self.client.on_message= receiver.on_message
         print("connecting to broker ", self.broker)
         try:
-            print("mi sto connettendo")
             self.client.connect(self.broker)
-            print("ce l'ho fatta")
             logging.info("connect to the broker")
 
         except:
             print("can't connect")
             logging.error("can't connect to broker")
             sys.exit(1)
-        print(self.topic_name1)
+
         #client.loop_start()
-        self.client.subscribe(self.topic_name1, qos=1)
+
+
+        self.client.subscribe(self.topic_name1[0], qos=1)
+        self.client.subscribe(self.topic_name1[1], qos=1)
 
         print("Subscribed!\n")
-        # client.disconnect()
-        #client.loop_stop()
         self.client.loop_forever()
 
 

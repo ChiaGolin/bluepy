@@ -38,7 +38,8 @@ logging.basicConfig(filename= 'Log/rasp'+rasp_id+'.log',level=logging.INFO, form
 
 
 #basic info for MQTT transmition
-broker = "127.0.0.1" #broker as my local address
+broker = "127.0.0.1" #broker as my local addressù
+broker = "10.79.1.176"
 topic_name =["topic/rasp4/directions/start", "topic/rasp4/directions/stop"]
 StartMsg = namedtuple('StartMsg', ['mac_address', 'place_id', 'id', 'timestamp', 'color', 'beacon_flag'])
 StopMsg = namedtuple('StopMsg', ['mac_address', 'timestamp'])
@@ -100,19 +101,6 @@ class ScanPrint(btle.DefaultDelegate):
         if dev.rssi < self.opts.sensitivity:
             return
 
-        print('    Device (%s): %s (%s), %d dBm %s' %
-              (status,
-               ANSI_WHITE + dev.addr + ANSI_OFF,
-               dev.addrType,
-               dev.rssi,
-               ('(connectable)' if dev.connectable else '(not connectable)'))
-              )
-        for (sdid, desc, val) in dev.getScanData():
-            if sdid in [8, 9]:
-                print('\t' + desc + ': \'' + ANSI_CYAN + val + ANSI_OFF + '\'')
-            else:
-                print('\t' + desc + ': <' + val + '>')
-                manufacturer = (val if 'Manufacturer' in desc else None)
 
         if not dev.scanData:
             print('\t(no data)')
@@ -134,7 +122,7 @@ class ScanPrint(btle.DefaultDelegate):
         }
         # minRSSI_bd
 
-        print()
+        #print()
 
 
 def main():
@@ -193,9 +181,10 @@ def RSSI_ave(list_RSSI):
     return average
 
 
-if __name__ == "__main__":
-    main()
+#if __name__ == "__main__":
 
+def Beacon():
+    main()
     ble_list=[]
     key_list=[]
     rssi_list=[]
@@ -231,7 +220,7 @@ if __name__ == "__main__":
 
         for i in range(0, len(BEACON_list)):
             # print(BeaconID)
-            # print(BEACON_list)
+            #print(BEACON_list)
             if BeaconID == BEACON_list[i]:
                 bool_val = bool_val + 1
 
@@ -250,8 +239,21 @@ if __name__ == "__main__":
                 RSSI_average = RSSI_ave(RSSI_list)
                 print(RSSI_average)
 
+                return MAC_List, BeaconID
 
-                Beacon_flag='1' #######################################------> RENDI A SCELTA
+
+
+
+
+
+            else:
+                print(">>>>> NOT A BEACON")
+        else:
+            continue
+
+'''
+
+  Beacon_flag='1' #######################################------> RENDI A SCELTA
                 color='white'####################################---->RENDI A SCELTA
                 placeID='3403' #######################################------> RENDI A SCELTA
                 starting_time = strftime("%H%M%S", localtime())  # hour, minute, second
@@ -268,28 +270,22 @@ if __name__ == "__main__":
                     "color":color,
                     "beacon_flag":Beacon_flag,
 
-                }
+    with open(BeaconID[0] + '.json', 'w') as f:
+        json_string = json.dump(Beacon_dictionary, f)'''
 
 
 
-
-
-                with open(BeaconID[0]+'.json', 'w') as f:
-                    json_string=json.dump(Beacon_dictionary,f)
-
-
-
-                #call the publish, so I can pass the jason file name to the Main
-                pub.publishing_start(BeaconID[0]+'.json', broker, topic_name)
-
-
-
-
-
+'''
+        print('    Device (%s): %s (%s), %d dBm %s' %
+              (status,
+               ANSI_WHITE + dev.addr + ANSI_OFF,
+               dev.addrType,
+               dev.rssi,
+               ('(connectable)' if dev.connectable else '(not connectable)'))
+              )
+        for (sdid, desc, val) in dev.getScanData():
+            if sdid in [8, 9]:
+                print('\t' + desc + ': \'' + ANSI_CYAN + val + ANSI_OFF + '\'')
             else:
-                print(">>>>> NOT A BEACON")
-        else:
-            continue
-
-
-
+                print('\t' + desc + ': <' + val + '>')
+                manufacturer = (val if 'Manufacturer' in desc else None)'''

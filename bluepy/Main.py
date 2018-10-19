@@ -37,7 +37,7 @@ starting_day = strftime("%d%m%y", localtime())
 
 log_path=os.system('mkdir -p Log')
 rasp_id ="A"
-place_id="0001"
+#place_id="0001"
 
 logging.basicConfig(filename= 'Log/rasp'+rasp_id+'.log',level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -49,6 +49,7 @@ logging.debug("Start smart directions on rasp "+rasp_id)
 
 #basic info for MQTT transmition
 broker = "127.0.0.1" #broker as my local address
+broker = "10.79.1.176"
 topic_name =["topic/rasp4/directions/start", "topic/rasp4/directions/stop"]
 StartMsg = namedtuple('StartMsg', ['mac_address', 'place_id', 'id', 'timestamp', 'color', 'beacon_flag'])
 StopMsg = namedtuple('StopMsg', ['mac_address', 'timestamp'])
@@ -58,17 +59,17 @@ def kill():
     os.system("pkill -f Main.p")
 
 def scanning_list(MQTT_DATA, ble_list):
-    #print("sono nella scanning list")
-    print(place_id)
 
+    MAcList=[]
     for i in range(0, len(MQTT_DATA["mac"])):
         MAcList.append(MQTT_DATA["mac"][i])
+        place_id=MQTT_DATA["place_id"]
 
 
     rssi=-100
 
     #rendilo continuo fino all'arrivo o allo scadere del timer
-    Scan.read_dict(MAcList, rssi, MQTT_DATA["id"], ble_list, place_id )
+    Scan.read_dict(MAcList, rssi, MQTT_DATA["id"], ble_list,place_id )
 
 def timer_scan(MQTT_DATA, TIMER):
     timer = Timer(TIMER, kill)
@@ -77,8 +78,6 @@ def timer_scan(MQTT_DATA, TIMER):
         scanning_list(MQTT_DATA)
 
 def single_process(MQTT_DATA):
-    print("single process")
-    print(MQTT_DATA)
 
     t1=threading.Thread(target=Sub.subscription, args=(broker, topic_name[1]))
     t2 = threading.Thread(target=timer_scan, args=(MQTT_DATA, 360.0))
@@ -87,16 +86,18 @@ def single_process(MQTT_DATA):
     t2.start()
 
 
-
+check=0
 
 
 if __name__ == "__main__":
 
 
     threads="None"
+    THREADS=[]
     array_dict=[]
     size=0
     bl_list={}
+    id_list=[]
     prov={}
     open("Thread.txt", 'w').close()
 
@@ -115,9 +116,9 @@ if __name__ == "__main__":
     # do some other stuff in the main process
     sub_q=queue.Queue(BUF_SIZE)
     del_q = queue.Queue(BUF_SIZE)
+    data_queue = queue.Queue(BUF_SIZE)
 
-    #map_root = open_map('map.xml')
-    #print(str(map_root))
+
 
 
     t_mqtt = Sub.subscribing_thread(topic_name, sub_q, del_q)
@@ -125,32 +126,48 @@ if __name__ == "__main__":
     t_mqtt.start()
 
 
+
     while True:
         #canc=0
 
-        ble_list=ble.ScanScan()
-        time.sleep(1)
+
+        #pp.pprint(ble_list)
+
+
 
         if not sub_q.empty():
 
             threads=sub_q.get()
-            print("-------------"+threads)
+            print("thread: "+threads)
 
             with open(threads) as f:
                 try:
                     prov=json.load(f)
-                    if prov not in array_dict:
+                    if prov["id"] not in id_list:
                         array_dict.append(prov)
+                        print("SONO ENTRATO")
+                        print(array_dict)
+                        id_list.append(prov["id"])
+                        print(id_list)
 
-                    else:
-                        print("c'è già")
                 except:
                     print("Malformed json")
 
+
+
         #print(str(array_dict))
         if len(array_dict)>0:
+            print("why")
+            ble_list = ble.ScanScan()
+            #time.sleep(1)
+
+            #print(len(array_dict))
             for i in range (0, len(array_dict)):
-                 scanning_list(array_dict[i], ble_list)
+                th=threading.Thread(target=scanning_list, args=(array_dict[i], ble_list))
+                THREADS.append(th)
+                th.start()
+                th.join()
+
 
 
         if not del_q.empty():
@@ -167,6 +184,7 @@ if __name__ == "__main__":
 
 
         threads=[]
+
 
 
 

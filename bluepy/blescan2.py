@@ -125,11 +125,11 @@ class ScanPrint(btle.DefaultDelegate):
        # print()
 
 
-def main():
+def main(lista):
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--hci', action='store', type=int, default=0,
                         help='Interface number for scan')
-    parser.add_argument('-t', '--timeout', action='store', type=int, default=3,
+    parser.add_argument('-t', '--timeout', action='store', type=int, default=2,
                         help='Scan delay, 0 for continuous')
     parser.add_argument('-s', '--sensitivity', action='store', type=int, default=-128,
                         help='dBm value for filtering far devices')
@@ -157,21 +157,22 @@ def main():
             if not d.connectable:
                 continue
 
-            #print("    Connecting to", ANSI_WHITE + d.addr + ANSI_OFF + ":")
-
             dev = btle.Peripheral(d)
             dump_services(dev)
             dev.disconnect()
-            #print()
+
 
 
 def RSSI_ave(list_RSSI):
     average = "{0:.2f}".format(sum(list_RSSI) / len(list_RSSI))
     return average
 
+def RSSI_max(list_RSSI):
+    maximum=max(list_RSSI)
+    return maximum
 
-def ScanScan():
-    main()
+def ScanScan(lista):
+    main(lista)
     #pp.pprint(bd_list)
     return bluetooth_devices
 

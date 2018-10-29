@@ -2,11 +2,12 @@ import blescan as ble
 from time import strftime, localtime
 import json
 import Publish as Pub
+import random
 
 #broker = "127.0.0.1"
 broker = "10.79.1.176"
 topic_name ="topic/rasp4/directions/start"
-start=input("Do you wabt to register a new beacon? [yes/no]")
+start=input("Do you want to register a new beacon? [y/n]")
 
 if start=="yes":
     MAC_list, BeaconID = ble.Beacon()
@@ -25,11 +26,11 @@ if start=="yes":
 
     if place=="1":
         placeID="0001"
-        color="white"
+
 
     if place=="2":
         placeID="0002"
-        color="blue"
+
 
     if place=="3":
         placeID="0003"
@@ -37,27 +38,27 @@ if start=="yes":
 
     if place=="4":
         placeID="0004"
-        color="yellow"
+
 
     if place=="5":
         placeID="0005"
-        color="green"
+
 
     if place=="6":
         placeID="3403"
-        color="black"
+
 
     if place=="7":
         placeID="3695"
-        color="orange"
+
 
     if place=="8":
         placeID="3449"
-        color="purple"
+
 
     if place=="9":
         placeID="3657"
-        color="grey"
+
 
     starting_time = strftime("%H%M%S", localtime())  # hour, minute, second
     starting_day = strftime("%d%m%y", localtime())
@@ -65,13 +66,17 @@ if start=="yes":
 
     Beacon_flag=1
 
+    color_array=["green", "red", "blue", "yellow", "pink", "brown", "black", "grey"]
+    val=random.randint(0, len(color_array)-1)
+    print(len(color_array))
+
     Beacon_dictionary = \
         {
             "id": str(BeaconID[0]),
             "mac": MAC_list,
             "place_id": placeID,
             "timestamp": timestamp,
-            "color": color,
+            "color": color_array[val],
             "beacon_flag": Beacon_flag,
 
         }

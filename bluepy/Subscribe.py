@@ -68,7 +68,7 @@ class Receive_on_message:
 
             json_name=json_file(ast.literal_eval(Msg))
 
-
+            print(json_name)
 
             if len(msg.payload)>0:
                 self.queue_sub.put(json_name) #scrive il nome del json file
@@ -107,7 +107,8 @@ def print_msg(client, userdata, message):
 class subscribing_thread(threading.Thread):
     def __init__(self, topic_name, queue, del_queue):
         threading.Thread.__init__(self)
-        self.broker="10.79.1.176"
+        #self.broker="10.79.1.176"
+        self.broker = "127.0.0.1"
         self.topic_name1=topic_name
         self.client = mqtt.Client()
         self.queue = queue

@@ -12,8 +12,8 @@ from  subprocess import call
 #basic info for MQTT transmition
 
 rasp_id ="A"
-#broker = "127.0.0.1" #broker as my local address
-broker = "10.79.1.176"
+broker = "127.0.0.1" #broker as my local address
+#broker = "10.79.1.176"
 #topic_name =["topic/rasp4/directions/start", "topic/rasp4/directions/stop"]
 StartMsg = namedtuple('StartMsg', ['mac_address', 'place_id', 'id', 'timestamp', 'color', 'beacon_flag'])
 StopMsg = namedtuple('StopMsg', ['mac_address', 'timestamp'])
@@ -34,9 +34,12 @@ def publishing_start(json_file, broker, topic_name):
     logging.info("The info of the beacon are in : "+ json_file)
 
 
-def publishing_stop(broker, topic_name, id):
-
-    os.system("mosquitto_pub -h " + broker + " -m "+id+".json  -t " + topic_name)
+def publishing_stop(broker, topic_name, message):
+    print("publish stop")
+    print(topic_name)
+    print(broker)
+    call(["mosquitto_pub", "-h", broker, "-t", topic_name, "-m", message ])
+    #os.system("mosquitto_pub -h " + broker + " -m stop  -t " + topic_name)
 
 
 #publishing_start("ndns", 213123, "bcdnc")

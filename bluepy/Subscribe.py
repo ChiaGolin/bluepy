@@ -11,23 +11,17 @@ from threading import *
 
 import threading
 import Publish as Pub
+import Main2
 #global variable
 mqtt_data={}
 
 
-broker = "127.0.0.1" #broker as my local address
-broker = "10.79.1.176"
 topic_name =["topic/rasp4/directions/start", "topic/rasp4/directions/stop"]
 
 log_path=os.system('mkdir -p Log')
-rasp_id ="A"
-logging.basicConfig(filename= 'Log/rasp'+rasp_id+'.log',level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def kill(val, val1):
-    print("timer scaduto")
-    print("topic/rasp4/directions/stop/" + val)
-    Pub.publishing_stop(broker, "topic/rasp4/directions/stop/" + val)
-    os.system("mosquitto_pub -h " + broker + " -m "+val1+"  -t " +"topic/rasp4/directions/stop/" + val)
+#logging.basicConfig(filename= 'Log/rasp'+rasp_id+'.log',level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 
 
 
@@ -73,8 +67,8 @@ class Receive_on_message:
             if len(msg.payload)>0:
                 self.queue_sub.put(json_name) #scrive il nome del json file
                 logging.info("loading json file "+ str(msg.payload.decode("utf-8")))
-                t = threading.Timer(360.0, kill, [str(msg.payload.decode("utf-8"))[0], str(msg.payload.decode("utf-8"))[0]])
-                t.start()
+                #t = threading.Timer(5.0, kill)
+                #t.start()
                 '''start_msg = StartMsg(id=mqtt_data["id"][0],
                                      mac_address=mqtt_data["mac_address"][0],
                                      place_id=mqtt_data["place_id"][0],
@@ -84,10 +78,15 @@ class Receive_on_message:
                 print(start_msg)'''
 
         elif msg.topic == "topic/rasp4/directions/stop":
-
+            print("***************************************************************")
             print("stop message: "+str(msg.payload.decode("utf-8")))
             logging.info("Stop tracking")
-            self.del_queue.put(Msg) # scrive il nome del json file
+            self.del_queue.put(str(msg.payload.decode("utf-8")))
+
+            #print(self.del_queue.get())
+            #Main2.user.stop()
+            #json_name = json_file(ast.literal_eval(Msg))
+            #self.del_queue.put(Msg) # scrive il nome del json file
 
 
 
@@ -135,6 +134,8 @@ class subscribing_thread(threading.Thread):
 
         self.client.subscribe(self.topic_name1[0], qos=1)
         self.client.subscribe(self.topic_name1[1], qos=1)
+
+
 
         print("Subscribed!\n")
         self.client.loop_forever()

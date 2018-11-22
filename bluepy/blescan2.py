@@ -74,6 +74,8 @@ class ScanPrint(btle.DefaultDelegate):
     def handleDiscovery(self, dev, isNewDev, isNewData):
         if isNewDev:
             status = "new"
+            #for i in range(0,len(self.array)):
+                #if
         elif isNewData:
             if self.opts.new:
                 return
@@ -86,6 +88,8 @@ class ScanPrint(btle.DefaultDelegate):
 
         if dev.rssi < self.opts.sensitivity:
             return
+
+
 
         '''print('    Device (%s): %s (%s), %d dBm %s' %
               (status,
@@ -125,7 +129,7 @@ class ScanPrint(btle.DefaultDelegate):
        # print()
 
 
-def main(lista):
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--hci', action='store', type=int, default=0,
                         help='Interface number for scan')
@@ -147,7 +151,7 @@ def main(lista):
 
     scanner = btle.Scanner(arg.hci).withDelegate(ScanPrint(arg))
 
-    print(ANSI_RED + "Scanning for devices..." + ANSI_OFF)
+   # print(ANSI_RED + "Scanning for devices..." + ANSI_OFF)
     devices = scanner.scan(arg.timeout)
 
     if arg.discover:
@@ -171,8 +175,32 @@ def RSSI_max(list_RSSI):
     maximum=max(list_RSSI)
     return maximum
 
-def ScanScan(lista):
-    main(lista)
+def RSSI_min(list_RSSI):
+    minimum=min(list_RSSI)
+    return minimum
+
+def RSSI_ave_min_max(list_RSSI):
+    count_min=0
+    count_max=0
+    maximum = max(list_RSSI)
+    minimum = min(list_RSSI)
+
+    for i in range(0, len(list_RSSI)):
+        if list_RSSI[i]==maximum and count_max==0:
+            idx_max=i
+        if list_RSSI[i]==minimum and count_min==0:
+            idx_min=i
+
+    del list_RSSI[idx_max]
+    del list_RSSI[idx_min]
+
+    average = "{0:.2f}".format(sum(list_RSSI) / len(list_RSSI))
+    return average
+
+
+
+def ScanScan():
+    main()
     #pp.pprint(bd_list)
     return bluetooth_devices
 
